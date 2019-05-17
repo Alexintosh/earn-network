@@ -60,7 +60,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
     // Tokens
     address cDAI_ropsten = 0xb6b09fBffBa6A5C4631e5F7B2e3Ee183aC259c0d;
     address iDAI_ropsten = 0xFCE3aEeEC8EB39304ED423c0d23c0A978DA9E934;
-    address dai_ropsten = 0x25a01a05C188DaCBCf1D61Af55D4a5B4021F7eeD; // Too many dai on ropsten 0xad6d458402f60fd3bd25163575031acdce07538d
+    address dai_ropsten = 0xaD6D458402F60fD3Bd25163575031ACDce07538D; // Too many dai on ropsten 0x25a01a05C188DaCBCf1D61Af55D4a5B4021F7eeD
     
     /*
      *  Storage
@@ -83,7 +83,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
     {
         block_start = block.number;
         addMinter(address(this));
-        selected_protocol = 3; // No protocol yet
+        selected_protocol = 0; // No protocol yet
         
         // Fulcrum
         iDAI = iToken(iDAI_ropsten);
@@ -93,6 +93,10 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         DAI = IERC20(dai_ropsten);
         DAI.approve(iDAI_ropsten, 2**256 - 1);
         DAI.approve(cDAI_ropsten, 2**256 - 1);
+    }
+    
+    function changeProtocol(uint256 id) public {
+        selected_protocol = id;
     }
     
     function getPoolSize() public view returns (uint256) {
@@ -125,6 +129,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         if(totalSupply() == 0) {
             return 1;
         }
+        //BUG, not sure why return zero for 4/5
 	    return getPoolSize() / totalSupply();  
     }
     
@@ -149,6 +154,21 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         if( selected_protocol == 1) {
             cDAI.mint(value);
         }
+    }
+    
+    function simWithdraw(uint256 value) public view returns (uint256, uint256, uint256){
+        require(value > 0, "value == 0");
+
+        if (value > balanceOf(msg.sender)) {
+            value = balanceOf(msg.sender);
+        }
+        
+        uint256 priceToken = getTokenPrice();
+        uint256 willWithdraw = value * priceToken;
+        
+        uint256 iTokenToWithdraw = willWithdraw * iDAI.tokenPrice();
+        
+        return (priceToken, willWithdraw, iTokenToWithdraw);
     }
     
     function withdraw(uint256 value) public {
