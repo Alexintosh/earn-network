@@ -83,7 +83,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
     {
         block_start = block.number;
         addMinter(address(this));
-        selected_protocol = 0; // No protocol yet
+        selected_protocol = 0;
         
         // Fulcrum
         iDAI = iToken(iDAI_ropsten);
@@ -130,7 +130,6 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         if(totalSupply() == 0) {
             return 1;
         }
-        //BUG, not sure why return zero for 4/5
         
 	    return getPoolSize()
                 .mul(10**18)
@@ -156,7 +155,6 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         require(DAI.transferFrom(msg.sender, address(this), value), "Transfer token not allowed");
         
         uint256 toBeMinted = value.div(priceToken);
-        // uint256 toBeMinted = value / priceToken;
         _mint(msg.sender, toBeMinted);
         
         contributions[msg.sender] = Contribution(value, block.number, msg.sender);
@@ -171,7 +169,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         }
     }
     
-    function simWithdraw(uint256 value) public view returns (uint256, uint256, uint256){
+    function simWithdraw(uint256 value) public view returns (uint256, uint256){
         require(value > 0, "value == 0");
 
         if (value > balanceOf(msg.sender)) {
@@ -180,10 +178,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         
         uint256 priceToken = getTokenPrice();
         uint256 willWithdraw = value.mul(priceToken).div(10**18);
-        
-        uint256 iTokenToWithdraw = willWithdraw.mul(iDAI.tokenPrice()).div(10**18);
-        
-        return (priceToken, willWithdraw, iTokenToWithdraw);
+        return (priceToken, willWithdraw);
     }
     
     
@@ -191,13 +186,10 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         return iDAI.tokenPrice();    
     }
     
-    function mul(uint256 value, uint256 value2) public pure returns (uint256){
-        return value.mul(value2).div(10**18);
-    }
-    
-    
-    function withdrawiDAI() public {
+    function emergency_withdrawiDAI() public {
         iDAI.burn(msg.sender, iDAI.assetBalanceOf(address(this)));
+        cDAI.redeemUnderlying(cDAI.balanceOf(address(this)));
+        require(DAI.transfer(msg.sender, DAI.balanceOf(address(this))), "withdraw not allowed");
     }
     
     function withdraw(uint256 value) public {
