@@ -54,7 +54,7 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
     IERC20 DAI;
     iToken iDAI;
     cToken cDAI;
-    uint256 selected_protocol; // 0 = Fulcum , 1 = Compound
+    uint256 public selected_protocol; // 0 = Fulcum , 1 = Compound
     
     
     // Tokens
@@ -125,12 +125,27 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         return current;
     }
     
+    // https://ethereum.stackexchange.com/questions/15090/cant-do-any-integer-division
     function getTokenPrice() public view returns (uint256){
         if(totalSupply() == 0) {
             return 1;
         }
         //BUG, not sure why return zero for 4/5
-	    return getPoolSize() / totalSupply();  
+        
+	    return getPoolSize()
+                .mul(10**18)
+                .div(totalSupply());
+    }
+    
+    function assetBalanceOf(
+        address _owner)
+        public
+        view
+        returns (uint256)
+    {
+        return balanceOf(_owner)
+            .mul(getTokenPrice())
+            .div(10**18);
     }
     
     function add(uint256 value) public {
@@ -140,8 +155,8 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         
         require(DAI.transferFrom(msg.sender, address(this), value), "Transfer token not allowed");
         
-        // uint256 toBeMinted = value.mul(10**18).div(priceToken);
-        uint256 toBeMinted = value / priceToken;
+        uint256 toBeMinted = value.div(priceToken);
+        // uint256 toBeMinted = value / priceToken;
         _mint(msg.sender, toBeMinted);
         
         contributions[msg.sender] = Contribution(value, block.number, msg.sender);
@@ -164,11 +179,25 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         }
         
         uint256 priceToken = getTokenPrice();
-        uint256 willWithdraw = value * priceToken;
+        uint256 willWithdraw = value.mul(priceToken).div(10**18);
         
-        uint256 iTokenToWithdraw = willWithdraw * iDAI.tokenPrice();
+        uint256 iTokenToWithdraw = willWithdraw.mul(iDAI.tokenPrice()).div(10**18);
         
         return (priceToken, willWithdraw, iTokenToWithdraw);
+    }
+    
+    
+    function iDAIPrice() public view returns (uint256){ 
+        return iDAI.tokenPrice();    
+    }
+    
+    function mul(uint256 value, uint256 value2) public pure returns (uint256){
+        return value.mul(value2).div(10**18);
+    }
+    
+    
+    function withdrawiDAI() public {
+        iDAI.burn(msg.sender, iDAI.assetBalanceOf(address(this)));
     }
     
     function withdraw(uint256 value) public {
@@ -179,11 +208,10 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         }
         
         uint256 priceToken = getTokenPrice();
-        uint256 willWithdraw = value * priceToken;
+        uint256 willWithdraw = value.mul(priceToken).div(10**18);
         
         if( selected_protocol == 0) {
-            uint256 iTokenToWithdraw = willWithdraw * iDAI.tokenPrice();
-            iDAI.burn(msg.sender, iTokenToWithdraw);
+            iDAI.burn(msg.sender, willWithdraw);
         } else if ( selected_protocol == 1) {
             cDAI.redeemUnderlying(willWithdraw);
             require(DAI.transfer(msg.sender, willWithdraw), "withdraw not allowed");
