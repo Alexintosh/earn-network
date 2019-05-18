@@ -198,23 +198,46 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         require(DAI.transfer(msg.sender, DAI.balanceOf(address(this))), "withdraw not allowed");
     }
     
-    function rebalanceTo(uint256 id) public {
+    function withdrawCdai(uint256 balance) public {
+        cDAI.redeemUnderlying(balance);
+    }
+    
+    function withdrawIdai(uint256 balance) public {
+        iDAI.burn(address(this), balance);
+    }
+    
+    function mintCdai(uint256 balance) public {
+        cDAI.mint(balance);
+    }
+    
+    function mintIdai(uint256 balance) public {
+        iDAI.mint(address(this), balance);
+    }
+    
+    function balanceIdai() public view returns (uint256){
+        return iDAI.balanceOf(address(this));
+    }
+    
+    function rebalanceTo(uint256 id) public returns (uint256) {
      
      //BUG dobbiamo controllar tutti i balance   
-     
-        uint256 balanceI = iDAI.balanceOf(address(this));
-        uint256 balanceC = cDAI.balanceOf(address(this));
-        uint256 balanceD = DAI.balanceOf(address(this));
+        State memory balances = getState();
+        // uint256 balanceI = iDAI.balanceOf(address(this));
+        // uint256 balanceC = cDAI.balanceOf(address(this));
+        // uint256 balanceD = DAI.balanceOf(address(this));
         
-        uint256 total = balanceD;
-        if( balanceC > 0 ){
-            cDAI.redeemUnderlying(balanceC);
-            total += balanceC;
+        uint256 total = balances.DAI;
+        
+        if( balances.Compound > 0 ){
+            cDAI.redeemUnderlying(balances.Compound);
+            total += balances.Compound;
         }
         
-        if( balanceI > 0 ){
-            iDAI.burn(address(this), balanceI);
-            total += balanceI;
+        if( balances.Fulcrum > 0 ){
+            
+            uint idaiBal = balanceIdai();
+            iDAI.burn(address(this), idaiBal);
+            total += balances.Fulcrum;
         }
         
         if( id == 0 ) {
@@ -224,6 +247,8 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         if ( id == 1 ) {
             cDAI.mint(total);
         }
+        
+        return total;
     }
     
     function withdraw(uint256 value) public {
@@ -236,17 +261,38 @@ contract Girasol is ERC20Mintable, ERC20Burnable {
         uint256 priceToken = getTokenPrice();
         uint256 willWithdraw = value.mul(priceToken).div(10**18);
         
-        if( selected_protocol == 0) {
-            iDAI.burn(msg.sender, willWithdraw);
-        } else if ( selected_protocol == 1) {
-            cDAI.redeemUnderlying(willWithdraw);
-            require(DAI.transfer(msg.sender, willWithdraw), "withdraw not allowed");
-        } else {
-            //BUG
+        State memory balances = getState();
+        
+        if( balances.DAI >= willWithdraw ){
             require(DAI.transfer(msg.sender, willWithdraw), "withdraw not allowed");    
+            burn(value);
+            return;
         }
         
-        burn(value);
+        if( balances.Compound > 0 ){
+            cDAI.redeemUnderlying(willWithdraw);
+            require(DAI.transfer(msg.sender, willWithdraw), "withdraw not allowed");
+            burn(value);
+            return;
+        }
+        
+        if( balances.Fulcrum > 0 ){
+            iDAI.burn(msg.sender, willWithdraw);
+            burn(value);
+            return;
+        }
+        
+        // if( selected_protocol == 0) {
+        //     iDAI.burn(msg.sender, willWithdraw);
+        // } else if ( selected_protocol == 1) {
+        //     cDAI.redeemUnderlying(willWithdraw);
+        //     require(DAI.transfer(msg.sender, willWithdraw), "withdraw not allowed");
+        // } else {
+        //     //BUG
+        //     require(DAI.transfer(msg.sender, willWithdraw), "withdraw not allowed");    
+        // }
+        
+        // burn(value);
     }
     
     function()  
