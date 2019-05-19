@@ -1,0 +1,12 @@
+{
+  "name": "earn-network",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Alexintosh/earn-network.git",
+  "author": "-",
+  "license": "MIT",
+  "dependencies": {
+    "@bzxnetwork/contracts": "^0.4.9",
+    "openzeppelin-solidity": "^2.2.0"
+  }
+}
