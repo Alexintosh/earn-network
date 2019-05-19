@@ -5,6 +5,9 @@
   "repository": "https://github.com/Alexintosh/earn-network.git",
   "author": "-",
   "license": "MIT",
+  "scripts": {
+    "copy:bzx": "cp -a ./node_modules/@bzxnetwork/contracts/migrations/. ./migrations/2_bzx && cp -a ./node_modules/@bzxnetwork/contracts/contracts/ ./contracts/bzx"
+  },
   "dependencies": {
     "@bzxnetwork/contracts": "^0.4.9",
     "openzeppelin-solidity": "^2.2.0"
