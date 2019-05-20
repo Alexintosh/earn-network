@@ -1,0 +1,16 @@
+{
+  "name": "earn-network",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/Alexintosh/earn-network.git",
+  "author": "-",
+  "license": "MIT",
+  "scripts": {
+    "copy:bzx": "cp -a ./node_modules/@bzxnetwork/contracts/migrations/. ./migrations/2_bzx && cp -a ./node_modules/@bzxnetwork/contracts/contracts/ ./contracts/bzx",
+    "clean:bzx": "rm -rf ./migrations/2_bzx && rm -rf ./contracts/bzx",
+    "testchain": "ganache-cli --fork https://ropsten.infura.io/v3/ffa6c1dc83e44e6c9971d4706311d5ab"
+  },
+  "dependencies": {
+    "openzeppelin-solidity": "^2.2.0"
+  }
+}
