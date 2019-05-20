@@ -4,11 +4,12 @@ pragma experimental ABIEncoderV2;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./interfaces/cToken.sol";
 import "./interfaces/iToken.sol";
 
 
-contract Girasol is ERC20, ERC20Detailed {
+contract Girasol is ERC20, ERC20Detailed, Ownable {
 
     uint256 public constant INITIAL_SUPPLY = 0 /*0 * (10 ** uint256(decimals))*/;
     uint256 public constant POOLSIZE = 0 /*0 * (10 ** uint256(decimals))*/;
@@ -20,9 +21,9 @@ contract Girasol is ERC20, ERC20Detailed {
 
 
     // Tokens
-    address cDAI_ropsten = 0xb6b09fBffBa6A5C4631e5F7B2e3Ee183aC259c0d;
-    address iDAI_ropsten = 0xFCE3aEeEC8EB39304ED423c0d23c0A978DA9E934;
-    address dai_ropsten = 0xaD6D458402F60fD3Bd25163575031ACDce07538D; // Too many dai on ropsten 0x25a01a05C188DaCBCf1D61Af55D4a5B4021F7eeD
+    address public cDAI_ropsten = 0xb6b09fBffBa6A5C4631e5F7B2e3Ee183aC259c0d;
+    address public iDAI_ropsten = 0xFCE3aEeEC8EB39304ED423c0d23c0A978DA9E934;
+    address public dai_ropsten = 0xaD6D458402F60fD3Bd25163575031ACDce07538D; // Too many dai on ropsten 0x25a01a05C188DaCBCf1D61Af55D4a5B4021F7eeD
 
     /*
      *  Storage
@@ -56,7 +57,8 @@ contract Girasol is ERC20, ERC20Detailed {
         DAI.approve(cDAI_ropsten, 2**256 - 1);
     }
 
-    function changeProtocol(uint256 id) public {
+    function changeProtocol(uint256 id) onlyOwner public {
+        require(id == 0 || id == 1, "CAN_NOT_SELECT_NON_EXISTENT_PROTOCOL");
         selected_protocol = id;
     }
 
@@ -146,7 +148,8 @@ contract Girasol is ERC20, ERC20Detailed {
         return iDAI.tokenPrice();
     }
 
-    function emergency_withdrawiDAI() public {
+    // TODO remove this on mainnet
+    function emergency_withdrawiDAI() onlyOwner public {
         iDAI.burn(msg.sender, iDAI.assetBalanceOf(address(this)));
         cDAI.redeemUnderlying(cDAI.balanceOf(address(this)));
         require(DAI.transfer(msg.sender, DAI.balanceOf(address(this))), "withdraw not allowed");
