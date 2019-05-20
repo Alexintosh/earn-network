@@ -1,5 +1,5 @@
 const Girasol = artifacts.require("Girasol");
-const daiABI = require("../build/contracts/EIP20.json").abi;
+const daiABI = require("../build/contracts/IERC20.json").abi;
 let gira;
 let dai;
 
@@ -49,8 +49,10 @@ contract("Girasol", async accounts => {
         assert.isTrue(error, "Should have thrown error");
     })
 
-    it("add() should work", async() => {
+    it.only("add() should work", async() => {
 
+        console.log(accounts);
+        console.log(await dai.methods.balanceOf(accounts[0]).call());
 
     })
 

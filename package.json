@@ -6,11 +6,11 @@
   "author": "-",
   "license": "MIT",
   "scripts": {
-    "copy:bzx": "cp -a ./node_modules/@bzxnetwork/contracts/migrations/. ./migrations/2_bzx && cp -a ./node_modules/@bzxnetwork/contracts/contracts/ ./contracts/bzx",
-    "clean:bzx": "rm -rf ./migrations/2_bzx && rm -rf ./contracts/bzx",
-    "testchain": "ganache-cli --fork https://ropsten.infura.io/v3/ffa6c1dc83e44e6c9971d4706311d5ab ----mnemonic defi is the best field of blockchain --deterministic"
+    "remix": "remixd -s ./ --remix-ide https://remix.ethereum.org",
+    "testchain": "ganache-cli --fork https://ropsten-rpc.linkpool.io --mnemonic defi is the best field of blockchain --deterministic"
   },
   "dependencies": {
+    "ganache-cli": "^6.4.3",
     "openzeppelin-solidity": "^2.2.0"
   }
 }

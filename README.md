@@ -5,7 +5,6 @@
 
 ```
 yarn install
-yarn copy:bzx
 truffle dev
 migrate
 ```
